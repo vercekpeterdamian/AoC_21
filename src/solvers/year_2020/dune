@@ -1,0 +1,8 @@
+(library
+ (libraries utils str solvers)
+ (name solvers2020))
+
+;(env
+; (dev
+;  (flags
+;   (:standard -warn-error -A))))
