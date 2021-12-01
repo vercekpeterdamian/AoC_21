@@ -47,6 +47,28 @@ end
 
 (* Tukaj re-definirajte funkcijo naloga1 in naloga2 *)
 module Solver1 : Solver = struct
+  let naloga1 data = 
+    let lines = List.int_list (List.lines data) in
+    let rec aux acc =
+      function
+      | [] -> string_of_int acc
+      | g1 :: g2 :: r when g1 < g2 -> aux (acc + 1) (g2 :: r)
+      | g :: r -> aux acc r
+    in
+    aux 0 lines
+
+  let naloga2 data _part1= 
+    let lines = List.int_list (List.lines data) in
+    let rec aux acc = 
+      function
+      | [] -> string_of_int acc
+      | g1 :: g2 :: g3 :: g4 :: r when (g1 + g2 + g3) < (g2 + g3 + g4) -> aux (acc + 1) (g2 :: g3 :: g4 :: r)
+      | _ :: r -> aux acc r
+    in
+    aux 0 lines
+end
+
+module Solver2 : Solver = struct
   let naloga1 data = ""
 
   let naloga2 data _part1 = ""
@@ -56,6 +78,7 @@ end
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
   | "1" -> (module Solver1)
+  | "2" -> (module Solver2)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
