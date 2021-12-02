@@ -45,6 +45,8 @@ module Solver0 : Solver = struct
     |> string_of_int
 end
 
+
+
 (* Tukaj re-definirajte funkcijo naloga1 in naloga2 *)
 module Solver1 : Solver = struct
   let naloga1 data = 
@@ -68,17 +70,57 @@ module Solver1 : Solver = struct
     aux 0 lines
 end
 
+
+
 module Solver2 : Solver = struct
+  let naloga1 data =
+    let lines = List.lines data in
+    let rec aux globina naravnost = function
+      | [] -> string_of_int (globina * naravnost)
+      | g :: r ->
+        let navodilo = String.split_on_char ' ' g in
+        match navodilo with
+        | "forward" :: x :: _ -> aux globina (naravnost + int_of_string x) r
+        | "up" :: x :: _ -> aux (globina - int_of_string x) naravnost r
+        | "down" :: x :: _ -> aux (globina + int_of_string x) naravnost r 
+        | _ -> failwith "nekaj ne deluje"
+    in
+    aux 0 0 lines
+
+
+  let naloga2 data _part1 =
+    let lines = List.lines data in
+    let rec aux globina naravnost smer = function
+      | [] -> string_of_int (globina * naravnost)
+      | g :: r ->
+        let navodilo = String.split_on_char ' ' g in
+        match navodilo with
+        | "up" :: x :: _ -> aux globina naravnost (smer - int_of_string x) r
+        | "down" :: x :: _ -> aux globina naravnost (smer + int_of_string x) r
+        | "forward" :: x :: _ -> aux (globina + smer * (int_of_string x)) (naravnost + int_of_string x) smer r
+        | _ -> failwith "Cry about it"
+    in
+    aux 0 0 0 lines
+    
+
+end
+
+
+
+module Solver3: Solver = struct
   let naloga1 data = ""
 
   let naloga2 data _part1 = ""
 end
+
+
 
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
   | "0" -> (module Solver0)
   | "1" -> (module Solver1)
   | "2" -> (module Solver2)
+  | "3" -> (module Solver3)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
