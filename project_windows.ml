@@ -108,6 +108,115 @@ end
 
 
 module Solver3: Solver = struct
+  (* https://caml.inria.fr/pub/old_caml_site/FAQ/FAQ_EXPERT-eng.html#strings *)
+  let explode s =
+    let rec exp i l =
+     if i < 0 then l else exp (i - 1) (s.[i] :: l) in
+    exp (String.length s - 1) []
+
+  let rec sestej_seznama sez1 sez2 =
+    match (sez1, sez2) with
+    | ([], []) -> []
+    | (g1 :: r1, g2 :: r2) -> (g1 +. g2) :: sestej_seznama r1 r2
+    | _ -> failwith "SEZNAMA NISTA ENAKO DOLGA!!"
+
+  let rec primerjaj_v_bin (pr, sez) =
+    match sez with
+    | [] -> []
+    | a :: r -> (if 2. *. a > pr then 1. else 0.) :: primerjaj_v_bin (pr, r)
+
+  let sez_bin_v_flt sez =
+    let rec aux acc i = function
+      | [] -> acc
+      | 1. :: rr -> aux (acc +. 2. ** i) (i +. 1.) rr
+      | _ :: rr -> aux acc (i +. 1.) rr
+    in
+    aux 0. 0. sez
+
+  let rec get_gamma counter_list ct = function
+    | [] -> ((float_of_int ct), counter_list)
+    | st :: rep -> 
+      let sezc = st
+        |> explode
+        |> List.map (fun x -> if x = '1' then 1. else 0.)
+      in
+      if counter_list = [] then get_gamma sezc (ct + 1) rep
+      else get_gamma (sestej_seznama counter_list sezc) (ct + 1) rep
+
+  let naloga1 data =
+    let lines = List.lines data in 
+    let gamma = lines 
+      |> get_gamma [] 0 
+      |> primerjaj_v_bin
+      |> List.rev 
+      |> sez_bin_v_flt 
+    in
+    string_of_int (int_of_float (gamma *. ( 2. ** 12. -. 1. -. gamma)))
+
+
+  let kisik_krit (ct, x) =
+    if 2 * x >= ct then '1' else '0'
+
+  let ogljik_krit (ct, x) =
+    if 2 * x < ct then '1' else '0'
+
+  let rec prestej_enice acc cot = function
+    | [] -> (acc, cot)
+    | x :: rep ->
+      if (List.nth x 0)  = '1' then prestej_enice (acc + 1) (cot + 1) rep
+      else prestej_enice (acc + 1) cot rep
+
+  let rec sestavi_s_kriterijem acc dolz cot general krit i sez =
+    if i = 0 then
+      let hocem = general (prestej_enice 0 0 sez) in
+      sestavi_s_kriterijem acc dolz cot general hocem (i + 1) sez
+    else
+    if i < 12 then
+      match sez with
+      | x :: [] when acc = [] -> x
+      | [] -> 
+        let novek = general (dolz, cot) in
+        sestavi_s_kriterijem [] 0 0 general novek (i + 1) acc
+      | x :: rep ->
+        if (List.nth x (i - 1)) <> krit then
+          sestavi_s_kriterijem acc dolz cot general krit i rep
+        else
+          if (List.nth x i) = '1' then
+            sestavi_s_kriterijem (x :: acc) (dolz + 1) (cot + 1) general krit i rep
+          else
+            sestavi_s_kriterijem (x :: acc) (dolz + 1) cot general krit i rep
+    else
+      match sez with
+      | [] -> failwith "Predam se"
+      | x :: rep ->
+        if (List.nth x 11) = krit then x
+        else sestavi_s_kriterijem [] 0 0 general krit 12 rep
+
+
+    
+  let naloga2 data _part1 =
+      let lines = data 
+        |> List.lines
+        |> List.map explode
+      in
+      let kisik = lines
+        |> sestavi_s_kriterijem [] 0 0 kisik_krit '0' 0 
+        |> List.rev
+        |> List.map (fun x -> if x = '1' then 1. else 0.)
+        |> sez_bin_v_flt
+      in
+      let ogljik = lines
+        |> sestavi_s_kriterijem [] 0 0 ogljik_krit '0' 0
+        |> List.rev
+        |> List.map (fun x -> if x = '1' then 1. else 0.)
+        |> sez_bin_v_flt
+      in
+      (kisik *. ogljik) |> int_of_float |> string_of_int
+end
+
+
+
+module Solver4: Solver = struct
   let naloga1 data = ""
 
   let naloga2 data _part1 = ""
@@ -121,6 +230,7 @@ let choose_solver : string -> (module Solver) = function
   | "1" -> (module Solver1)
   | "2" -> (module Solver2)
   | "3" -> (module Solver3)
+  | "4" -> (module Solver4)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
