@@ -215,12 +215,136 @@ module Solver3: Solver = struct
 end
 
 
-
+(* NE DELUJE
 module Solver4: Solver = struct
+  type bingo = (int list list) * (int list)
+
+  let rec pretvori_podatke accVELIK acc i = function
+    | [] -> accVELIK
+    | x when i = 5 -> 
+      pretvori_podatke (acc :: accVELIK) [] 0 x
+    | x :: rep ->
+      pretvori_podatke accVELIK (x :: acc) (i + 1) rep
+
+  let rec zbrisi_prvih i = function
+    | [] -> []
+    | _ :: rep when i = 1 -> rep
+    | x :: rep -> x :: (zbrisi_prvih (i - 1) rep)
+
+  let rec pristej_na_mesto i j = function
+    | x :: r when i = 0 -> (x + j) :: r
+    | x :: r -> x :: pristej_na_mesto (i - 1) j r
+    | _ -> failwith "Indeks prevelik"
+
+  let rec mogoce_bingo (matrika, seznamck) =
+    if List.exists (fun x -> x = 5) seznamck then true else false
+
+  let zakljuci iscem (matrika, q) =
+    let a = matrika
+      |> List.map (List.fold_left (+) 0)
+      |> List.fold_left (+) 0
+    in
+    string_of_int (a * iscem)
+
+  let rec preisci_odstrani_shrani iscem vr st bing = 
+    match vr, st, bing with
+    | _, 5, _ -> preisci_odstrani_shrani iscem (vr + 1) 0 bing
+    | 5, _, _ -> bing
+    | vr, st, (matrika, seznamck) -> 
+      let vrstica = List.nth matrika vr in
+      if iscem = List.nth vrstica st then
+        let seznamck_spremenjen = seznamck
+          |> pristej_na_mesto st 1
+          |> pristej_na_mesto (vr + 5) 1
+        in
+        let matrika_spremenjena = matrika
+          |> List.map (List.map (fun x -> if iscem = x then 0 else x))
+        in
+        (matrika_spremenjena, seznamck_spremenjen)
+      else
+      preisci_odstrani_shrani iscem vr (st + 1) (matrika, seznamck)
+
+  let rec izpelji_obravnavo i seznam bingeci =
+    let iscem = List.nth seznam i in
+    let rec aux acc iscem = function
+      | [] -> izpelji_obravnavo (i + 1) seznam acc
+      | glava :: rep -> 
+        let nova = preisci_odstrani_shrani iscem 0 0 glava in
+        match nova with
+        | x when mogoce_bingo x -> zakljuci iscem x
+        | x -> 
+          aux (x :: acc) iscem rep
+    in 
+    aux [] iscem bingeci
+
+  let naloga1 data = 
+    let lines = List.lines data
+    in
+    let navodila = (List.nth lines 0)
+      |> String.split_on_char ','
+      |> List.map int_of_string
+      |> List.map (fun x -> x + 1)
+    in
+    let sneg = [0; 0; 0; 0; 0; 0; 0; 0; 0; 0] in
+    let bingoti = lines
+      |> List.filter (fun x -> if x <> "" then true else false)
+      |> pretvori_podatke [] [] 0
+      |> List.map (List.map (String.split_on_char ' '))
+      |> List.map (List.map (List.filter (fun x -> if x <> "" then true else false)))
+      |> List.map (List.map (List.map int_of_string))
+      |> List.map (List.map (List.map (fun x -> x + 1)))
+      |> List.map (fun x -> (x, sneg))
+    in
+    izpelji_obravnavo 0 navodila bingoti
+
+  let naloga2 data _part1 = ""
+end
+*)
+
+
+module Solver7: Solver = struct
+  let naloga1 data =
+    let podatki = data
+      |> String.split_on_char ','
+      |> List.map int_of_string
+      |> List.sort (fun x y -> if x > y then 1 else if x = y then 0 else (-1))
+    in
+    let qq = float_of_int (List.length podatki) in
+    let n = int_of_float (floor (qq /. 2.)) in
+    let kandidat = List.nth podatki n in
+    let gorivo = podatki
+      |> List.map (fun x -> abs((kandidat - x)))
+      |> List.fold_left (+) 0
+    in
+    string_of_int gorivo
+      
+
+
+  let naloga2 data _part1 = 
+    let podatki = data
+      |> String.split_on_char ','
+      |> List.map int_of_string
+      |> List.sort (fun x y -> if x > y then 1 else if x = y then 0 else (-1))
+    in
+    let povp = (List.fold_left (+) 0 podatki) / (List.length podatki) in
+    let gorivo = podatki
+      |> List.map (fun x -> let q = abs(x - povp) in (q * (q + 1)) / 2)
+      |> List.fold_left (+) 0
+    in
+    let gorivo2 = podatki
+      |> List.map (fun x -> let q = abs(x - (povp + 1)) in (q * (q + 1)) / 2)
+      |> List.fold_left (+) 0
+    in
+    if gorivo > gorivo2 then string_of_int gorivo2 else string_of_int gorivo
+
+end
+
+module Solver8: Solver = struct
   let naloga1 data = ""
 
   let naloga2 data _part1 = ""
 end
+
 
 
 
@@ -230,7 +354,8 @@ let choose_solver : string -> (module Solver) = function
   | "1" -> (module Solver1)
   | "2" -> (module Solver2)
   | "3" -> (module Solver3)
-  | "4" -> (module Solver4)
+  | "7" -> (module Solver7)
+  | "8" -> (module Solver8)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
